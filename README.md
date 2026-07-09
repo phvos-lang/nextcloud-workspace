@@ -12,6 +12,8 @@ A browser-based remote desktop — a Kasm alternative built on a custom VNC stac
 
 See [Features](#features) below for the full list, or [docs/architecture.md](docs/architecture.md) for how it fits together.
 
+![LWP desktop](docs/images/workspace.png)
+
 ## Stack
 
 | Layer | Technology |
