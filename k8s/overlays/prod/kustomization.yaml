@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lwp
+
+resources:
+  - ../../base
+  - secrets.yaml          # not committed — see secrets.yaml.example
+
+images:
+  - name: registry.example.com/lwp/backend
+    newTag: "1.0.0"
+  - name: registry.example.com/lwp/frontend
+    newTag: "1.0.0"
+
+patches:
+  - path: nginx-config-patch.yaml

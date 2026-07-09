@@ -1,0 +1,64 @@
+#!/bin/bash
+# Runs inside the KasmVNC X session.
+# Openbox (kiosk: no decorations, all windows maximized) + the app.
+
+export DISPLAY=:1
+export PULSE_RUNTIME_PATH=/run/user/1000/pulse
+
+# GTK icon theme + MIME database
+export GTK_THEME=Adwaita
+export GSETTINGS_BACKEND=memory
+export XDG_DATA_DIRS=/usr/local/share:/usr/share
+export GDK_BACKEND=x11
+
+# D-Bus for clipboard / IME
+eval "$(dbus-launch --sh-syntax 2>/dev/null)" || true
+
+# GTK settings (icon theme, font) — created at session start so the path exists
+mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-2.0"
+cat > "$HOME/.config/gtk-3.0/settings.ini" << 'EOF'
+[Settings]
+gtk-icon-theme-name=Adwaita
+gtk-theme-name=Adwaita
+gtk-font-name=Sans 10
+gtk-button-images=1
+gtk-menu-images=1
+EOF
+cat > "$HOME/.config/gtk-2.0/gtkrc" << 'EOF'
+gtk-icon-theme-name="Adwaita"
+gtk-theme-name="Adwaita"
+gtk-font-name="Sans 10"
+EOF
+
+# Populate standard XDG dirs (Downloads, Documents, etc.)
+xdg-user-dirs-update 2>/dev/null || true
+
+# Openbox in kiosk mode — handles window placement, no panel/taskbar
+openbox --config-file /etc/lwp/openbox.xml &
+sleep 0.5
+
+# Start the app — no exec so we can clean up when it exits.
+# LWP_OPEN_FILE (file manager "Open with…") is passed as the first argument;
+# wait for the rclone Nextcloud mount to expose the file (up to 60s). Only pass
+# it if it actually appeared, so a slow/failed mount doesn't hand the app a
+# bad path (which would just show an empty start screen).
+if [ -n "${LWP_OPEN_FILE:-}" ]; then
+  for _i in $(seq 1 300); do
+    [ -e "${LWP_OPEN_FILE}" ] && break
+    sleep 0.2
+  done
+  if [ -e "${LWP_OPEN_FILE}" ]; then
+    ${LWP_START_APP} "${LWP_OPEN_FILE}"
+  else
+    echo "xstartup: LWP_OPEN_FILE never appeared (${LWP_OPEN_FILE}) — starting without it" >&2
+    ${LWP_START_APP}
+  fi
+else
+  ${LWP_START_APP}
+fi
+
+# App exited — notify backend then stop VNC so supervisord doesn't restart
+curl -sf -X POST "${LWP_BACKEND_URL:-http://backend:8000}/api/sessions/self-stop" \
+  -H "X-Session-Token: ${LWP_SESSION_TOKEN:-}" 2>/dev/null || true
+touch /tmp/.lwp-app-exited
+vncserver -kill :1 2>/dev/null || pkill -f "Xvnc :1" 2>/dev/null || true

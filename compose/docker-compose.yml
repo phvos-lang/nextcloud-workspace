@@ -1,0 +1,181 @@
+services:
+
+  # ── Data layer ───────────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lwp
+      POSTGRES_USER: lwp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lwpdev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lwp -d lwp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # ── Application layer ────────────────────────────────────────────────────────
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lwp:${POSTGRES_PASSWORD:-lwpdev}@postgres:5432/lwp
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-please-change}
+      AUTH_METHODS: ${AUTH_METHODS:-oidc}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid email profile groups}
+      OIDC_GROUPS_CLAIM: ${OIDC_GROUPS_CLAIM:-groups}
+      OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Sign in with your organisation}
+      LDAP_HOST: ${LDAP_HOST:-}
+      LDAP_PORT: ${LDAP_PORT:-389}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-}
+      LDAP_USER_FILTER: ${LDAP_USER_FILTER:-(uid={username})}
+      LDAP_USER_ATTR_EMAIL: ${LDAP_USER_ATTR_EMAIL:-mail}
+      LDAP_USER_ATTR_DISPLAY_NAME: ${LDAP_USER_ATTR_DISPLAY_NAME:-cn}
+      LDAP_TLS: ${LDAP_TLS:-none}
+      LDAP_GROUPS_ATTR: ${LDAP_GROUPS_ATTR:-memberOf}
+      LWP_BASE_URL: ${LWP_BASE_URL:-http://localhost}
+      LWP_ENV: development
+      DOCKER_NETWORK: ${DOCKER_NETWORK:-compose_internal}
+    volumes:
+      - ../backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - recordings:/data/recordings
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    command: ["arq", "app.tasks.worker.WorkerSettings"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lwp:${POSTGRES_PASSWORD:-lwpdev}@postgres:5432/lwp
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-please-change}
+      LWP_ENV: development
+      DOCKER_NETWORK: ${DOCKER_NETWORK:-compose_internal}
+      SESSION_TIMEOUT_HOURS: ${SESSION_TIMEOUT_HOURS:-8}
+    volumes:
+      - ../backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - recordings:/data/recordings
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_BASE: ""
+    volumes:
+      - ../frontend:/app
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # ── Proxy ────────────────────────────────────────────────────────────────────
+
+  nginx:
+    build:
+      context: ../nginx
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ../nginx/dev.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # Log-based Prometheus exporter — per-session bytes from the nginx access log
+  mtail:
+    image: ghcr.io/google/mtail:3.0.8
+    command: ["-progs", "/etc/mtail", "-logs", "/var/log/nginx/session.log", "-port", "3903"]
+    volumes:
+      - ../nginx/lwp.mtail:/etc/mtail/lwp.mtail:ro
+      - nginx_logs:/var/log/nginx:ro
+    ports:
+      - "3903:3903"
+    depends_on:
+      - nginx
+    networks:
+      - internal
+    restart: unless-stopped
+
+
+  # ── Test desktop (opt-in, start with: docker compose --profile testing up webtop) ──
+
+  webtop:
+    image: lscr.io/linuxserver/webtop:ubuntu-xfce
+    profiles: [testing]
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: ${TZ:-Europe/Amsterdam}
+      CUSTOM_USER: dev
+      PASSWORD: devpass
+    shm_size: 1g
+    networks:
+      - internal
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  recordings:
+  redis_data:
+  frontend_node_modules:
+  nginx_logs:
+
+networks:
+  internal:

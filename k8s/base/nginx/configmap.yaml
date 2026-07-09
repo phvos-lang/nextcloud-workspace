@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: lwp
+data:
+  nginx.conf: |
+    # Mounted from nginx/prod.conf — see repo nginx/prod.conf
+    # The full config is injected via overlay patch or direct copy.
+    # Reference: k8s/overlays/prod/nginx-config-patch.yaml

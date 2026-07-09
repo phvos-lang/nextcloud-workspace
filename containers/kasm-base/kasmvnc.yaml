@@ -1,0 +1,17 @@
+desktop:
+  resolution:
+    width: 1920
+    height: 1080
+  allow_resize: true
+network:
+  protocol: http
+  interface: "0.0.0.0"
+  websocket_port: 8080
+  use_ipv4: true
+  use_ipv6: false
+  udp:
+    public_ip: ""
+    port: 0
+    stun_server: ""
+command_line:
+  prompt: false

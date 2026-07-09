@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: lwp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: lwp-backend
+      containers:
+        - name: backend
+          image: registry.example.com/lwp/backend:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: database-url
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: secret-key
+            - name: OIDC_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: oidc-issuer
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: oidc-client-id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: oidc-client-secret
+            - name: LWP_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: lwp-config
+                  key: base-url
+            # Optional overrides — pods start fine if these keys are absent.
+            - name: AUTH_METHODS
+              valueFrom:
+                configMapKeyRef:
+                  name: lwp-config
+                  key: auth-methods
+                  optional: true
+            - name: OIDC_BUTTON_LABEL
+              valueFrom:
+                configMapKeyRef:
+                  name: lwp-config
+                  key: oidc-button-label
+                  optional: true
+            - name: OIDC_SCOPES
+              valueFrom:
+                configMapKeyRef:
+                  name: lwp-config
+                  key: oidc-scopes
+                  optional: true
+            - name: OIDC_GROUPS_CLAIM
+              valueFrom:
+                configMapKeyRef:
+                  name: lwp-config
+                  key: oidc-groups-claim
+                  optional: true
+            - name: LWP_ENV
+              value: production
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi

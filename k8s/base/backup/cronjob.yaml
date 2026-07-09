@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: lwp
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: pg-backup
+              image: postgres:16-alpine
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  BACKUP_FILE="/backup/lwp_$(date +%Y%m%d_%H%M%S).sql.gz"
+                  pg_dump -h postgres -U lwp -d lwp | gzip > "$BACKUP_FILE"
+                  # Keep only last 7 days of backups
+                  find /backup -name "lwp_*.sql.gz" -mtime +7 -delete
+                  echo "Backup complete: $BACKUP_FILE"
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: lwp-secrets
+                      key: postgres-password
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          volumes:
+            - name: backup-volume
+              persistentVolumeClaim:
+                claimName: pg-backup-pvc
+          restartPolicy: OnFailure

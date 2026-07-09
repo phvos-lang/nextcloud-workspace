@@ -1,0 +1,15 @@
+# Patches the nginx ConfigMap to use the full prod.conf content.
+# Run: kubectl create configmap nginx-config --from-file=nginx.conf=nginx/prod.conf -n lwp --dry-run=client -o yaml \
+#        | kubectl apply -f -
+#
+# Or add directly here as a literal. Managed via kustomize configMapGenerator instead:
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+configMapGenerator:
+  - name: nginx-config
+    namespace: lwp
+    files:
+      - nginx.conf=../../../nginx/prod.conf
+    options:
+      disableNameSuffixHash: true

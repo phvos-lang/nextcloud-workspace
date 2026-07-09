@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orphaned-pvc-cleanup
+  namespace: lwp
+spec:
+  schedule: "0 4 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: bitnami/kubectl:latest
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  for pvc in $(kubectl get pvc -n lwp -o jsonpath='{range .items[?(@.metadata.labels.lwp\.managed=="true")]}{.metadata.name}{"\n"}{end}'); do
+                    OWNER=$(kubectl get pvc "$pvc" -n lwp -o jsonpath='{.metadata.ownerReferences}' 2>/dev/null)
+                    if [ -z "$OWNER" ]; then
+                      kubectl delete pvc "$pvc" -n lwp
+                      echo "Deleted orphaned PVC: $pvc"
+                    fi
+                  done
+          restartPolicy: OnFailure

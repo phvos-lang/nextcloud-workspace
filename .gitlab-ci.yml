@@ -1,0 +1,99 @@
+# LWP CI — lint, test, build, scan
+#
+# All jobs run on plain runners (no docker socket needed) except the manual
+# session-image build, which requires a runner with docker-in-docker.
+
+stages: [lint, test, build, scan]
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
+
+backend-lint:
+  stage: lint
+  image: python:3.13.14-slim-trixie
+  cache:
+    key: pip
+    paths: [.cache/pip]
+  script:
+    - pip install --quiet "ruff>=0.8"
+    - cd backend && ruff check app/
+
+backend-test:
+  stage: test
+  image: python:3.13.14-slim-trixie
+  cache:
+    key: pip
+    paths: [.cache/pip]
+  script:
+    - cd backend
+    - pip install --quiet poetry
+    - poetry config virtualenvs.create false
+    - poetry install --no-interaction --no-ansi --no-root
+    - python -m pytest tests/ -q
+
+frontend-build:
+  stage: test
+  image: node:20-slim
+  cache:
+    key: npm
+    paths: [.cache/npm]
+  script:
+    - cd frontend
+    - npm ci --no-audit --no-fund
+    - npm run build   # tsc --noEmit && vite build
+  artifacts:
+    paths: [frontend/dist/]
+    expire_in: 1 week
+
+# Validates every session-image Dockerfile actually builds.
+# Manual: needs a dind-capable runner and ~15 min.
+build-session-images:
+  stage: build
+  image: docker:27
+  services: [docker:27-dind]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - apk add --no-cache make
+  script:
+    - make -C containers all
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+      allow_failure: true
+
+# GitLab Pages — publishes the MkDocs docs site (docs/ + mkdocs.yml) at the
+# project's Pages URL on every push to main. Requires Pages to be enabled on
+# the GitLab instance (admin: pages_external_url in gitlab.rb).
+pages:
+  stage: build
+  image: python:3.13.14-slim-trixie
+  cache:
+    key: pip
+    paths: [.cache/pip]
+  script:
+    - pip install --quiet "mkdocs-material==9.*" "mkdocs<2"
+    - mkdocs build --strict --site-dir public
+  artifacts:
+    paths: [public]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes: [docs/**/*, mkdocs.yml, .gitlab-ci.yml]
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+      allow_failure: true
+
+# Vulnerability / misconfig / secret scan of the repo tree (Trivy).
+# allow_failure while the baseline is being burned down — tighten later.
+trivy-scan:
+  stage: scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs --scanners vuln,misconfig,secret
+        --severity HIGH,CRITICAL --ignore-unfixed
+        --exit-code 1 --no-progress .
+  allow_failure: true

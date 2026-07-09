@@ -1,0 +1,49 @@
+site_name: Nextcloud Linux Workspace (LWP)
+site_description: Enterprise browser-based remote desktop — Kasm alternative, deeply integrated with Nextcloud.
+repo_url: https://github.com/harm/lwp
+repo_name: lwp
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Apps:
+      - Catalog & adding apps: apps.md
+      - Custom app images: custom-image.md
+  - Auth setup: auth-setup.md
+  - VPN gateway: vpn.md
+  - Deployment (Kubernetes): deployment-k8s.md
+  - Thin clients (PXE kiosk, idea): thin-client-pxe.md
+  - Tuning (audio/storage): tuning.md
+  - API reference: api.md

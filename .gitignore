@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+*~
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Secrets / env
+.env
+.env.local
+.env.*.local
+compose/.env
+
+# Certs
+*.pem
+*.key
+*.crt
+compose/certs/
+
+# Docker
+*.tar
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic
+backend/alembic/versions/*.pyc
+
+# stray backup files
+*.bak
+
+donotsync/

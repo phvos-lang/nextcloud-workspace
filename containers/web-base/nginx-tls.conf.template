@@ -1,0 +1,36 @@
+# Rendered at startup (__APP_PORT__ -> $LWP_APP_PORT). Runs as lwp: pid + temp
+# paths under /tmp, logs to stdout/stderr.
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+events { worker_connections 512; }
+
+http {
+    access_log /dev/stdout;
+    client_body_temp_path /tmp/nginx-body;
+    proxy_temp_path       /tmp/nginx-proxy;
+    fastcgi_temp_path     /tmp/nginx-fcgi;
+    uwsgi_temp_path       /tmp/nginx-uwsgi;
+    scgi_temp_path        /tmp/nginx-scgi;
+
+    map $http_upgrade $conn { default upgrade; '' close; }
+
+    server {
+        listen 8080 ssl;
+        ssl_certificate     /etc/lwp-tls/cert.pem;
+        ssl_certificate_key /etc/lwp-tls/key.pem;
+
+        client_max_body_size 0;
+
+        location / {
+            __REWRITE__
+            proxy_pass http://127.0.0.1:__APP_PORT__;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade    $http_upgrade;
+            proxy_set_header Connection $conn;
+            proxy_set_header Host       $host;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+    }
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- FTP client: two servers + transfer arrows -->
+  <rect x="8" y="10" width="20" height="44" rx="3" fill="#c62828"/>
+  <rect x="36" y="10" width="20" height="44" rx="3" fill="#455a64"/>
+  <circle cx="12.5" cy="15" r="1.5" fill="#fff"/>
+  <circle cx="40.5" cy="15" r="1.5" fill="#8fd14f"/>
+  <rect x="11" y="22" width="14" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+  <rect x="11" y="27" width="14" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+  <rect x="39" y="22" width="14" height="2" rx="1" fill="#ffffff" opacity="0.5"/>
+  <rect x="39" y="27" width="14" height="2" rx="1" fill="#ffffff" opacity="0.5"/>
+  <!-- arrows between -->
+  <path d="M29 36 L35 36 L35 33 L40 38 L35 43 L35 40 L29 40 Z" fill="#8fd14f"/>
+  <path d="M35 46 L29 46 L29 43 L24 48 L29 53 L29 50 L35 50 Z" fill="#ffcdd2"/>
+</svg>

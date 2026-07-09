@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4CAF50"/>
+      <stop offset="100%" stop-color="#1B5E20"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Document shape -->
+  <rect x="14" y="10" width="30" height="38" rx="2" fill="white" opacity="0.95"/>
+  <!-- Dog-ear fold -->
+  <path d="M44 10 L44 20 L54 20Z" fill="#2E7D32"/>
+  <path d="M44 10 L54 20 L44 20Z" fill="white" opacity="0.6"/>
+  <!-- Text lines -->
+  <rect x="18" y="26" width="22" height="2.5" rx="1" fill="#388E3C"/>
+  <rect x="18" y="32" width="20" height="2.5" rx="1" fill="#388E3C"/>
+  <rect x="18" y="38" width="16" height="2.5" rx="1" fill="#388E3C"/>
+  <!-- L letter accent -->
+  <text x="42" y="58" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="white" opacity="0.9" text-anchor="middle">L</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- VS Code style fold ribbon, VSCodium teal -->
+  <path d="M46 6 58 12v40l-12 6-24-19-9 7-7-4V22l7-4 9 7L46 6z" fill="#26a69a"/>
+  <path d="M46 18 30 32l16 14V18z" fill="#ffffff" opacity="0.92"/>
+  <path d="M22 25l-9 7 9 7V25z" fill="#0e7c73"/>
+</svg>

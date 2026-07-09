@@ -1,0 +1,75 @@
+{
+  "title": "Nextcloud Linux Workspace",
+  "uid": "lwp-overview",
+  "schemaVersion": 39,
+  "timezone": "",
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Active sessions",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [ { "expr": "lwp_active_sessions", "refId": "A" } ]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Failed logins (5m)",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [
+        { "color": "green", "value": null }, { "color": "orange", "value": 5 }, { "color": "red", "value": 20 } ] } } },
+      "targets": [ { "expr": "sum(increase(lwp_auth_failed_total[5m]))", "refId": "A" } ]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Sessions started / stopped (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(lwp_sessions_created_total[5m]))", "legendFormat": "created", "refId": "A" },
+        { "expr": "sum(rate(lwp_sessions_stopped_total[5m]))", "legendFormat": "stopped", "refId": "B" }
+      ]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Auth success / failure (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(lwp_auth_total[5m]))", "legendFormat": "success", "refId": "A" },
+        { "expr": "sum(rate(lwp_auth_failed_total[5m]))", "legendFormat": "failed", "refId": "B" }
+      ]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "HTTP request rate",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [ { "expr": "sum(rate(http_requests_total[5m])) by (handler)", "legendFormat": "{{handler}}", "refId": "A" } ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "HTTP p95 latency (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95", "refId": "A" } ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Session throughput (bytes/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "Bps" } },
+      "targets": [
+        { "expr": "rate(nginx_session_bytes_sent_total[5m])", "legendFormat": "to client", "refId": "A" },
+        { "expr": "rate(nginx_session_bytes_received_total[5m])", "legendFormat": "from client", "refId": "B" }
+      ]
+    }
+  ]
+}

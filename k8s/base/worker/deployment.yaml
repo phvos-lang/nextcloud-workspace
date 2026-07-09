@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: lwp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      serviceAccountName: lwp-backend
+      containers:
+        - name: worker
+          image: registry.example.com/lwp/backend:latest
+          command: ["arq", "app.tasks.worker.WorkerSettings"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: database-url
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lwp-secrets
+                  key: secret-key
+            - name: LWP_ENV
+              value: production
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

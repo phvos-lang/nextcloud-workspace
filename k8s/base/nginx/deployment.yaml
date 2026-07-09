@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: lwp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3903"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: tls-certs
+              mountPath: /etc/nginx/certs
+              readOnly: true
+            - name: nginx-logs
+              mountPath: /var/log/nginx
+        # mtail sidecar — exports per-session bytes from the nginx access log.
+        - name: mtail
+          image: ghcr.io/google/mtail:3.0.8
+          args: ["-progs", "/etc/mtail", "-logs", "/var/log/nginx/session.log", "-port", "3903"]
+          ports:
+            - containerPort: 3903
+              name: metrics
+          volumeMounts:
+            - name: mtail-progs
+              mountPath: /etc/mtail
+              readOnly: true
+            - name: nginx-logs
+              mountPath: /var/log/nginx
+              readOnly: true
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits:   { cpu: 100m, memory: 128Mi }
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: tls-certs
+          secret:
+            secretName: lwp-tls
+        - name: nginx-logs
+          emptyDir: {}
+        - name: mtail-progs
+          configMap:
+            name: mtail-progs

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mtail-progs
+  namespace: lwp
+data:
+  lwp.mtail: |
+    # Turns nginx's per-session access log into Prometheus counters (aggregate).
+    counter nginx_session_bytes_sent_total
+    counter nginx_session_bytes_received_total
+    counter nginx_session_requests_total
+
+    /lwp_sess sent=(?P<sent>\d+) recv=(?P<recv>\d+)/ {
+      nginx_session_bytes_sent_total += $sent
+      nginx_session_bytes_received_total += $recv
+      nginx_session_requests_total++
+    }

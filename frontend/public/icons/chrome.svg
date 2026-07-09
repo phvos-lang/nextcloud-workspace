@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Chrome segments -->
+  <circle cx="32" cy="32" r="32" fill="#4285F4"/>
+  <!-- Red segment top-left -->
+  <path d="M32 32 L32 0 A32 32 0 0 0 4.3 16Z" fill="#EA4335"/>
+  <!-- Yellow segment top-right -->
+  <path d="M32 32 L4.3 16 A32 32 0 0 0 4.3 48Z" fill="#FBBC05"/>
+  <!-- Green segment bottom -->
+  <path d="M32 32 L4.3 48 A32 32 0 0 0 59.7 48Z" fill="#34A853"/>
+  <!-- Blue segment right (completes the circle, already base fill) -->
+  <!-- Inner white ring -->
+  <circle cx="32" cy="32" r="16" fill="white"/>
+  <!-- Inner blue circle -->
+  <circle cx="32" cy="32" r="11" fill="#4285F4"/>
+</svg>
