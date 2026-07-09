@@ -107,7 +107,7 @@ First user to log in automatically becomes admin.
 - **Survives everything** — tunnel runs in tmux: minimise, reload, or close the tab and it stays up; taskbar shield (amber → green) shows live state and reopens the terminal
 
 ### Auth & Security
-- **OIDC** — Azure AD, Okta, Auth0, Google Workspace, Authentik; configurable SSO button label
+- **OIDC** — Azure AD, Okta, Auth0, Google Workspace, Authentik, **or Nextcloud itself** (its `oidc` provider app — almost seamless: one login authenticates the user and auto-mounts their Nextcloud storage, see [docs/auth-setup.md](docs/auth-setup.md#nextcloud-recommended--same-instance-as-your-storage)); configurable SSO button label
 - **Local accounts** — bcrypt passwords, first-user bootstrap
 - **LDAP / Active Directory** — bind + search, group sync
 - **TOTP 2FA** — for local and LDAP users; Fernet-encrypted secret

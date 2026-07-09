@@ -4,7 +4,7 @@ LWP supports three authentication methods that can be enabled individually or co
 
 | Method | Use case |
 |---|---|
-| `oidc` | Enterprise SSO — Azure AD, Okta, Google, Auth0, Authentik |
+| `oidc` | Enterprise SSO — Azure AD, Okta, Google, Auth0, Authentik, **Nextcloud** |
 | `local` | Username + bcrypt password stored in the LWP database |
 | `ldap` | Bind against an existing OpenLDAP or Active Directory server |
 
@@ -192,6 +192,32 @@ OIDC_ISSUER=https://auth.example.com/application/o/{slug}/
 OIDC_SCOPES=openid email profile
 OIDC_GROUPS_CLAIM=groups
 ```
+
+### Nextcloud (recommended — same instance as your storage)
+
+If Nextcloud is already your storage backend, install its **`oidc`** app (Nextcloud →
+Apps → "OpenID Connect Provider") to turn the same Nextcloud instance into your
+OIDC identity provider. Users then log into LWP with their Nextcloud account —
+one login, one identity, no separate IdP to run.
+
+1. Nextcloud → Apps → enable **OpenID Connect Provider** (`oidc`).
+2. Settings → OpenID Connect → **Add client**: name it `LWP`, redirect URI
+   `https://lwp.example.com/api/auth/oidc/callback`. Note the generated
+   client ID/secret.
+
+```env
+OIDC_ISSUER=https://cloud.example.com
+OIDC_CLIENT_ID=<from the NC oidc app>
+OIDC_CLIENT_SECRET=<from the NC oidc app>
+OIDC_SCOPES=openid email profile groups
+OIDC_GROUPS_CLAIM=groups
+```
+
+This is the **almost-seamless** setup: pair it with [Nextcloud auto-mount via
+OIDC](#nextcloud-auto-mount-via-oidc) below and the same login both
+authenticates the user *and* mounts their Nextcloud storage — no admin
+credentials, no separate account linking, because the IdP and the storage
+backend are the same account.
 
 ---
 
