@@ -9,6 +9,9 @@ dist/
 .mypy_cache/
 .ruff_cache/
 
+# MkDocs
+site/
+
 # Node
 node_modules/
 frontend/dist/

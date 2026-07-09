@@ -1,7 +1,7 @@
 site_name: Nextcloud Linux Workspace (LWP)
 site_description: Enterprise browser-based remote desktop — Kasm alternative, deeply integrated with Nextcloud.
-repo_url: https://github.com/harm/lwp
-repo_name: lwp
+repo_url: https://github.com/phvos-lang/nextcloud-workspace
+repo_name: nextcloud-workspace
 docs_dir: docs
 
 theme:
