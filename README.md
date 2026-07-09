@@ -1,6 +1,8 @@
 # Nextcloud Linux Workspace (LWP)
 
 > **Proof of Concept.** This is a working POC, not a hardened production release — code and APIs may change without notice, and it hasn't had a full security audit. Everything below is implemented and runnable, but treat it as a demo/evaluation build.
+>
+> Built with a local LLM (Qwen3, via OpenWebUI) and Claude. Thanks to every open-source app bundled or integrated here — Nextcloud, KasmVNC, and all the rest — for the great software.
 
 A browser-based remote desktop — a Kasm alternative built on a custom VNC stack with a full windowed desktop experience, deeply integrated with Nextcloud. Log in once and get a full Linux desktop (or individual apps) running in isolated containers, streamed to the browser, with your Nextcloud storage mounted everywhere.
 
